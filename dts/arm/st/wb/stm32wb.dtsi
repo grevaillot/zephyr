@@ -32,7 +32,7 @@
 			device_type = "cpu";
 			compatible = "arm,cortex-m4f";
 			reg = <0>;
-			cpu-power-states = <&stop0 &stop1 &stop2>;
+			cpu-power-states = <&stop0 &stop1>;
 		};
 
 		power-states {
@@ -48,12 +48,6 @@
 				substate-id = <2>;
 				min-residency-us = <500>;
 			};
-			stop2: state2 {
-				compatible = "zephyr,power-state";
-				power-state-name = "suspend-to-idle";
-				substate-id = <3>;
-				min-residency-us = <900>;
-			};
 		};
 	};
 
@@ -63,13 +57,11 @@
 
 	sram1: memory@20030000 {
 		compatible = "zephyr,memory-region", "mmio-sram";
-		reg = <0x20030000 0x2800>;
 		zephyr,memory-region = "SRAM1";
 	};
 
 	sram2: memory@20038000 {
 		compatible = "zephyr,memory-region", "mmio-sram";
-		reg = <0x20038000 0x5000>;
 		zephyr,memory-region = "SRAM2";
 	};
 

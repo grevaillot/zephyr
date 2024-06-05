@@ -1,0 +1,28 @@
+/*
+ * Copyright (c) 2024 Wirestone
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <st/wb/stm32wb.dtsi>
+
+/ {
+	soc {
+		compatible = "st,stm32wb15", "st,stm32wb", "simple-bus";
+
+		flash: flash-controller@58004000 {
+			flash0: flash@8000000 {
+				erase-block-size = <2048>;
+				/* maximum erase time(ms) for a 2K sector */
+				max-erase-time = <25>;
+			};
+		};
+	};
+
+};
+
+/delete-node/ &clk_hsi48;
+/delete-node/ &usb;
+/delete-node/ &dma2;
+/delete-node/ &i2c3;
+/delete-node/ &smbus3;

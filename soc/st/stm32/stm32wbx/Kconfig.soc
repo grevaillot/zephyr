@@ -10,9 +10,20 @@ config SOC_SERIES_STM32WBX
 config SOC_SERIES
 	default "stm32wbx" if SOC_SERIES_STM32WBX
 
+config SOC_STM32WB10XX
+	bool
+	select SOC_SERIES_STM32WBX
+
+config SOC_STM32WB15XX
+	bool
+	select SOC_SERIES_STM32WBX
+
 config SOC_STM32WB55XX
 	bool
 	select SOC_SERIES_STM32WBX
 
+
 config SOC
+	default "stm32wb10xx" if SOC_STM32WB10XX
+	default "stm32wb15xx" if SOC_STM32WB15XX
 	default "stm32wb55xx" if SOC_STM32WB55XX

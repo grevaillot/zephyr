@@ -7,6 +7,33 @@
 #include <st/wb/stm32wb.dtsi>
 
 / {
+	cpus {
+		cpu0: cpu@0 {
+			cpu-power-states = <&stop0 &stop1 &stop2>;
+		};
+
+		power-states {
+			stop2: state2 {
+				compatible = "zephyr,power-state";
+				power-state-name = "suspend-to-idle";
+				substate-id = <3>;
+				min-residency-us = <900>;
+			};
+		};
+	};
+
+	sram0: memory@20000000 {
+		reg = <0x20000000 DT_SIZE_K(192)>;
+	};
+
+	sram1: memory@20030000 {
+		reg = <0x20030000 DT_SIZE_K(32)>;
+	};
+
+	sram2: memory@20038000 {
+		reg = <0x20038000 DT_SIZE_K(32)>;
+	};
+
 	soc {
 		compatible = "st,stm32wb55", "st,stm32wb", "simple-bus";
 	};

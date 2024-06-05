@@ -4,25 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include <mem.h>
-#include <st/wb/stm32wb55.dtsi>
+#include <st/wb/stm32wb15.dtsi>
 
 / {
 	sram0: memory@20000000 {
-		reg = <0x20000000 DT_SIZE_K(192)>;
+		reg = <0x20000000 DT_SIZE_K(12)>;
 	};
 
 	sram1: memory@20030000 {
-		reg = <0x20030000 DT_SIZE_K(32)>;
+		reg = <0x20000000 DT_SIZE_K(32)>;
 	};
 
 	sram2: memory@20038000 {
-		reg = <0x20038000 DT_SIZE_K(32)>;
+		reg = <0x20000000 DT_SIZE_K(4)>;
 	};
 
 	soc {
 		flash-controller@58004000 {
 			flash0: flash@8000000 {
-				reg = <0x08000000 DT_SIZE_M(1)>;
+				reg = <0x08000000 DT_SIZE_K(320)>;
 			};
 		};
 	};

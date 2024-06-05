@@ -1,0 +1,26 @@
+identifier: nucleo_wb15cc
+name: ST Nucleo WB15CC
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+ram: 48
+flash: 320
+supported:
+  - gpio
+  - i2c
+  - counter
+  - dma
+  - spi
+  - pwm
+  - adc
+  - watchdog
+  - arduino_gpio
+  - arduino_i2c
+  - arduino_spi
+  - usb_device
+  - nvs
+  - rtc
+vendor: st

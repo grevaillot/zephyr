@@ -1,0 +1,5 @@
+board:
+  name: nucleo_wb15cc
+  vendor: st
+  socs:
+    - name: stm32wb15xx
