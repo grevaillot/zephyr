@@ -1,0 +1,42 @@
+# Copyright (c) 2025
+# SPDX-License-Identifier: Apache-2.0
+
+config MODEM_SQN_GM02S
+	bool "Sequans GM02S socket offload driver"
+	select MODEM_CONTEXT
+	select MODEM_CMD_HANDLER
+	select MODEM_IFACE_UART
+	select MODEM_SOCKET
+	select NET_SOCKETS_OFFLOAD
+	depends on DT_HAS_SQN_GM02S_ENABLED
+	help
+	  Socket offload driver for the Sequans GM02S LTE-M modem.
+	  Uses AT+SQNSD/SQNSRECV/SQNSSENDEXT for direct socket management.
+	  TCP only.
+
+if MODEM_SQN_GM02S
+
+config MODEM_SQN_GM02S_RX_STACK_SIZE
+	int "RX thread stack size"
+	default 1028
+
+config MODEM_SQN_GM02S_RX_WORKQ_STACK_SIZE
+	int "Work queue stack size"
+	default 2048
+
+config MODEM_SQN_GM02S_APN
+	string "APN"
+	default "internet"
+
+config MODEM_SQN_GM02S_INIT_PRIORITY
+	int "Init priority"
+	default 80
+
+config MODEM_SQN_GM02S_UNSOL_RDY
+	string "Unsolicited ready message"
+	default "+SYSSTART"
+	help
+	  The unsolicited message the modem sends when it is ready
+	  after a boot or reset.
+
+endif # MODEM_SQN_GM02S
