@@ -35,13 +35,6 @@ static const struct gpio_dt_spec power_gpio =
 	GPIO_DT_SPEC_INST_GET(0, mdm_power_gpios);
 #endif
 
-/* DNS offload */
-#if defined(CONFIG_DNS_RESOLVER)
-static struct zsock_addrinfo result;
-static struct sockaddr result_addr;
-static char result_canonname[DNS_MAX_NAME_SIZE + 1];
-#endif
-
 /* ========================================================================
  * Helpers
  * ======================================================================== */
@@ -213,20 +206,6 @@ MODEM_CMD_DEFINE(on_cmd_atcmdinfo_imei)
 	LOG_INF("IMEI: %s", mdata.mdm_imei);
 	return 0;
 }
-
-#if defined(CONFIG_DNS_RESOLVER)
-/* Handler: +SQNDNSLKUP: <hostname>,<ipAddress>
- * argv[0] = hostname, argv[1] = resolved IP address
- */
-MODEM_CMD_DEFINE(on_cmd_dns)
-{
-	/* Hard-code DNS to return IPv4 */
-	result_addr.sa_family = AF_INET;
-	(void)net_addr_pton(AF_INET, argv[1],
-			    &((struct sockaddr_in *)&result_addr)->sin_addr);
-	return 0;
-}
-#endif
 
 /* Handler: TX Ready (the ">" prompt) */
 MODEM_CMD_DIRECT_DEFINE(on_cmd_tx_ready)
@@ -835,87 +814,6 @@ static const struct socket_op_vtable offload_socket_fd_op_vtable = {
 
 static int offload_socket(int family, int type, int proto);
 
-/* ========================================================================
- * DNS offload
- * ======================================================================== */
-
-#if defined(CONFIG_DNS_RESOLVER)
-static int offload_getaddrinfo(const char *node, const char *service,
-			       const struct zsock_addrinfo *hints,
-			       struct zsock_addrinfo **res)
-{
-	static const struct modem_cmd cmd =
-		MODEM_CMD("+SQNDNSLKUP: ", on_cmd_dns, 2U, ",");
-	uint32_t port = 0U;
-	int ret;
-	/* AT+SQNDNSLKUP="<hostname>",0 + 128 bytes for domain name */
-	char sendbuf[sizeof("AT+SQNDNSLKUP=\"\",0") + 128];
-
-	/* init result */
-	(void)memset(&result, 0, sizeof(result));
-	(void)memset(&result_addr, 0, sizeof(result_addr));
-	result.ai_family = AF_INET;
-	result_addr.sa_family = AF_INET;
-	result.ai_addr = &result_addr;
-	result.ai_addrlen = sizeof(result_addr);
-	result.ai_canonname = result_canonname;
-	result_canonname[0] = '\0';
-
-	if (service) {
-		port = ATOI(service, 0U, "port");
-		if (port < 1 || port > USHRT_MAX) {
-			return DNS_EAI_SERVICE;
-		}
-	}
-
-	if (port > 0U) {
-		if (result.ai_family == AF_INET) {
-			net_sin(&result_addr)->sin_port = htons(port);
-		}
-	}
-
-	/* check to see if node is already an IP address */
-	if (net_addr_pton(result.ai_family, node,
-			  &((struct sockaddr_in *)&result_addr)->sin_addr) ==
-	    0) {
-		*res = &result;
-		return 0;
-	}
-
-	/* user flagged node as numeric host, but we failed net_addr_pton */
-	if (hints && hints->ai_flags & AI_NUMERICHOST) {
-		return DNS_EAI_NONAME;
-	}
-
-	/* AT+SQNDNSLKUP="hostname",0  (0 = IPv4) */
-	snprintk(sendbuf, sizeof(sendbuf), "AT+SQNDNSLKUP=\"%s\",0", node);
-	ret = modem_cmd_send(&mctx.iface, &mctx.cmd_handler, &cmd, 1U,
-			     sendbuf, &mdata.sem_response, MDM_DNS_TIMEOUT);
-	if (ret < 0) {
-		return ret;
-	}
-
-	LOG_DBG("DNS RESULT: %s",
-		net_addr_ntop(result.ai_family,
-			      &net_sin(&result_addr)->sin_addr, sendbuf,
-			      NET_IPV4_ADDR_LEN));
-
-	*res = &result;
-	return 0;
-}
-
-static void offload_freeaddrinfo(struct zsock_addrinfo *res)
-{
-	/* using static result from offload_getaddrinfo() -- no need to free */
-	ARG_UNUSED(res);
-}
-
-static const struct socket_dns_offload offload_dns_ops = {
-	.getaddrinfo = offload_getaddrinfo,
-	.freeaddrinfo = offload_freeaddrinfo,
-};
-#endif /* CONFIG_DNS_RESOLVER */
-
 static void modem_net_iface_init(struct net_if *iface)
 {
 	const struct device *dev = net_if_get_device(iface);
@@ -924,10 +822,6 @@ static void modem_net_iface_init(struct net_if *iface)
 	net_if_set_link_addr(iface, modem_get_mac(dev), sizeof(data->mac_addr),
 			     NET_LINK_ETHERNET);
 	data->net_iface = iface;
-
-#if defined(CONFIG_DNS_RESOLVER)
-	socket_offload_dns_register(&offload_dns_ops);
-#endif
 
 	net_if_socket_offload_set(iface, offload_socket);
 }
