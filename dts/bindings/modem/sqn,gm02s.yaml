@@ -11,6 +11,3 @@ properties:
   mdm-reset-gpios:
     type: phandle-array
     required: true
-
-  mdm-power-gpios:
-    type: phandle-array
