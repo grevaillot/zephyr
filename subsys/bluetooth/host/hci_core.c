@@ -2314,6 +2314,11 @@ static void bt_hci_evt_read_remote_version_complete(struct net_buf *buf)
 }
 #endif /* CONFIG_BT_REMOTE_VERSION */
 
+__weak void bt_hci_hardware_error_cb(uint8_t hardware_code)
+{
+	ARG_UNUSED(hardware_code);
+}
+
 static void hci_hardware_error(struct net_buf *buf)
 {
 	struct bt_hci_evt_hardware_error *evt;
@@ -2321,6 +2326,8 @@ static void hci_hardware_error(struct net_buf *buf)
 	evt = net_buf_pull_mem(buf, sizeof(*evt));
 
 	LOG_ERR("Hardware error, hardware code: %d", evt->hardware_code);
+
+	bt_hci_hardware_error_cb(evt->hardware_code);
 }
 
 #if defined(CONFIG_BT_SMP)

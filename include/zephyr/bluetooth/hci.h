@@ -196,6 +196,16 @@ typedef bool bt_hci_vnd_evt_cb_t(struct net_buf_simple *buf);
   */
 int bt_hci_register_vnd_evt_cb(bt_hci_vnd_evt_cb_t cb);
 
+/** @brief Notification hook for HCI Hardware Error events.
+  *
+  * Weak by default (no-op). Applications may override this function to be
+  * notified whenever the Controller reports a Hardware Error event
+  * (HCI event 0x10, see Core Spec Vol 4, Part E, 7.7.15).
+  *
+  * @param hardware_code Implementation-specific hardware error code.
+  */
+void bt_hci_hardware_error_cb(uint8_t hardware_code);
+
 /** @brief Get Random bytes from the LE Controller.
  *
  * Send the HCI_LE_Rand to the LE Controller as many times as required to
