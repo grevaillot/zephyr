@@ -171,7 +171,8 @@ static inline bool z_stm32_hsem_is_owned(uint32_t hsem)
 #if defined(CONFIG_SOC_SERIES_STM32WBX) || defined(CONFIG_STM32H7_DUAL_CORE) \
 	|| defined(CONFIG_SOC_SERIES_STM32MP1X)
 
-	owned = LL_HSEM_GetCoreId(HSEM, hsem) == LL_HSEM_COREID;
+	owned = LL_HSEM_IsSemaphoreLocked(HSEM, hsem) &&
+		(LL_HSEM_GetCoreId(HSEM, hsem) == LL_HSEM_COREID);
 #endif /* CONFIG_SOC_SERIES_STM32WBX || CONFIG_STM32H7_DUAL_CORE || ... */
 
 	return owned;
