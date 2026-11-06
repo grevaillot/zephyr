@@ -980,9 +980,19 @@ static void set_up_fixed_clock_sources(void)
 	}
 
 	if (IS_ENABLED(STM32_LSE_ENABLED)) {
+		/*
+		 * The RCC semaphore is not recursive: when the caller already
+		 * owns it (STM32WB low power exit), releasing it here would let
+		 * the other core reconfigure the clocks while the rest of the
+		 * clock tree is being restored.
+		 */
+		bool rcc_hsem_owned = z_stm32_hsem_is_owned(CFG_HW_RCC_SEMID);
+
 		/* LSE belongs to the back-up domain, enable access.*/
 
-		z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
+		if (!rcc_hsem_owned) {
+			z_stm32_hsem_lock(CFG_HW_RCC_SEMID, HSEM_LOCK_DEFAULT_RETRY);
+		}
 
 		stm32_backup_domain_enable_access();
 
@@ -1024,7 +1034,9 @@ static void set_up_fixed_clock_sources(void)
 
 		stm32_backup_domain_disable_access();
 
-		z_stm32_hsem_unlock(CFG_HW_RCC_SEMID);
+		if (!rcc_hsem_owned) {
+			z_stm32_hsem_unlock(CFG_HW_RCC_SEMID);
+		}
 	}
 
 #if defined(STM32_MSI_ENABLED)
