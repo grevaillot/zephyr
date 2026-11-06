@@ -1,0 +1,28 @@
+/*
+ * Copyright (c) 2018 Linaro Limited
+ * Copyright (c) 2024 STMicroelectronics
+ * Copyright (c) 2026 NGV Electronique
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#include <st/wb/stm32wb55.dtsi>
+
+/ {
+	soc {
+		flash-controller@58004000 {
+			flash0: flash@8000000 {
+				/* Physical flash size is 512kByte but the last 76kByte
+				 * are assigned to the wireless firmware running on
+				 * Cortex-M0 companion (BLE HCI layer firmware install
+				 * address on 512kByte parts: 0x0806D000).
+				 */
+				reg = <0x08000000 DT_SIZE_K(436)>;
+				ranges = <0 0x8000000 DT_SIZE_K(436)>;
+			};
+		};
+	};
+
+	sram0: memory@20000000 {
+		reg = <0x20000000 DT_SIZE_K(192)>;
+	};
+};
