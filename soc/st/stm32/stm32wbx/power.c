@@ -56,6 +56,28 @@ static void lpm_hsem_lock(void)
 	}
 }
 
+/*
+ * AN5289: the clocks only need to be restored when the system actually went
+ * through STOP. When CPU2 kept the system running, SYSCLK is still on its
+ * configured source and reinitializing the clock tree would tear down the
+ * clocks CPU2 is running on.
+ */
+static bool sysclk_needs_restore(void)
+{
+	uint32_t sws = LL_RCC_GetSysClkSource();
+
+	if (IS_ENABLED(STM32_SYSCLK_SRC_PLL)) {
+		return sws != LL_RCC_SYS_CLKSOURCE_STATUS_PLL;
+	} else if (IS_ENABLED(STM32_SYSCLK_SRC_HSE)) {
+		return sws != LL_RCC_SYS_CLKSOURCE_STATUS_HSE;
+	} else if (IS_ENABLED(STM32_SYSCLK_SRC_MSI)) {
+		return sws != LL_RCC_SYS_CLKSOURCE_STATUS_MSI;
+	}
+
+	/* HSI is also the wake-up clock: no way to tell, always restore */
+	return true;
+}
+
 /* Invoke Low Power/System Off specific Tasks */
 void pm_state_set(enum pm_state state, uint8_t substate_id)
 {
@@ -135,8 +157,19 @@ void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 				substate_id);
 			break;
 		}
-		/* need to restore the clock */
-		stm32_clock_control_init(NULL);
+		if (sysclk_needs_restore()) {
+			stm32_clock_control_init(NULL);
+		} else if (IS_ENABLED(STM32_HSI48_ENABLED)) {
+			/*
+			 * CLK48 was released on entry so that CPU2 can gate
+			 * HSI48: take it back and make sure HSI48 runs again,
+			 * as the clock tree initialization would have done.
+			 */
+			z_stm32_hsem_lock(CFG_HW_CLK48_CONFIG_SEMID, HSEM_LOCK_DEFAULT_RETRY);
+			LL_RCC_HSI48_Enable();
+			while (LL_RCC_HSI48_IsReady() != 1) {
+			}
+		}
 	}
 
 	/* Release RCC semaphore */
